@@ -34,16 +34,16 @@ def run_conversion(j,req):
     work=OUTPUT_DIR/j; work.mkdir(parents=True,exist_ok=True)
     try:
         set_job(j,status="processing")
-        meta=subprocess.run(["yt-dlp","--no-playlist","--dump-single-json","--skip-download",req.url],capture_output=True,text=True,timeout=45,check=True)
+        meta=subprocess.run(["yt-dlp","--js-runtimes","node","--no-playlist","--dump-single-json","--skip-download",req.url],capture_output=True,text=True,timeout=45,check=True)
         info=json.loads(meta.stdout); duration=int(info.get("duration") or 0)
         if duration>MAX_DURATION: raise RuntimeError("Video is longer than the 60-minute limit.")
         title=safe_title(info.get("title") or "MP17")
         if req.format=="mp3":
             q=req.quality if req.quality in {"128","192","320"} else "192"; template=str(work/f"{title}.%(ext)s")
-            cmd=["yt-dlp","--no-playlist","-x","--audio-format","mp3","--audio-quality",f"{q}K","-o",template,req.url]
+            cmd=["yt-dlp","--js-runtimes","node","--no-playlist","-x","--audio-format","mp3","--audio-quality",f"{q}K","-o",template,req.url]
         else:
             template=str(work/"source.%(ext)s")
-            cmd=["yt-dlp","--no-playlist","-f","bv*[height<=1080][fps<=60][vcodec^=avc1]+ba[acodec^=mp4a]/bv*[height<=1080][fps<=60]+ba/b","-o",template,req.url]
+            cmd=["yt-dlp","--js-runtimes","node","--no-playlist","-f","bv*[height<=1080][fps<=60][vcodec^=avc1]+ba[acodec^=mp4a]/bv*[height<=1080][fps<=60]+ba/b","-o",template,req.url]
         r=subprocess.run(cmd,capture_output=True,text=True,timeout=900)
         if r.returncode: raise RuntimeError((r.stderr or r.stdout or "Conversion failed")[-1500:])
         files=[p for p in work.iterdir() if p.is_file() and p.suffix.lower() in {".mp3",".mp4",".m4a",".webm",".mkv"}]
