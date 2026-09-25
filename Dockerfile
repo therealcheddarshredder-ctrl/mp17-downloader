@@ -1,7 +1,7 @@
 FROM node:22-bookworm-slim
 
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends python3 python3-venv ffmpeg ca-certificates curl \
+  && apt-get install -y --no-install-recommends python3 python3-venv ffmpeg ca-certificates \
   && python3 -m venv /opt/venv \
   && rm -rf /var/lib/apt/lists/*
 
@@ -10,11 +10,9 @@ ENV PATH="/opt/venv/bin:$PATH"
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-RUN curl -fsSL https://github.com/yt-dlp/yt-dlp-nightly-builds/releases/latest/download/yt-dlp_linux -o /usr/local/bin/yt-dlp \
-  && chmod 0755 /usr/local/bin/yt-dlp \
-  && yt-dlp --version
+RUN pip install --no-cache-dir -r requirements.txt \
+  && pip install --no-cache-dir --pre "yt-dlp[default]" \
+  && python -c "import yt_dlp, yt_dlp_ejs; print(yt_dlp.version.__version__)"
 
 COPY app.py .
 
